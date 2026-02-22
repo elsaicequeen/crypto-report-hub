@@ -41,6 +41,16 @@ BLOB_READ_WRITE_TOKEN="your_vercel_blob_token"
 4.  Start the local dev server: `vercel dev`
 5.  The app will be available at `http://localhost:3000`.
 
+## Future Roadmap & AI Best Practices (Phase H)
+
+To ensure this project scales to an enterprise level without suffering from vendor lock-in or LLM hallucinations, future development should adhere to these architectural principles:
+
+1. **Model Agnosticism (OpenRouter):** Transition away from direct OpenAI SDK integrations. Route all LLM calls through [OpenRouter](https://openrouter.ai/) to consolidate billing and dynamically hot-swap models. 
+2. **Task-Specific LLM Routing:** Use deep reasoning models (like `Claude 3.5 Sonnet` or `o3-mini`) for complex, multi-page PDF extraction and standard models (like `gpt-4o-mini`) for simple data formatting.
+3. **Advanced RAG & Forced Citations:** Upgrade the Pinecone semantic search to use Cohere Reranking. Restrict the LLM with structural prompts that demand exact page citations for every summarized claim to definitively eliminate AI hallucinations.
+4. **Relational Database Migration:** Migrate the backend data store from Google Sheets to a robust relational database like **Vercel Postgres** or **Supabase** to support org-wide usage and thousands of concurrent reads/writes.
+5. **Role-based Authentication:** Implement **NextAuth.js** for secure organizational SSO to replace the current shared-password gate.
+
 ## Deployment
 
 This application is designed to be hosted on Vercel. Pushing to the `main` branch will automatically trigger a production deployment if connected to a Vercel project.

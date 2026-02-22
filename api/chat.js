@@ -74,7 +74,7 @@ ${chunks}`;
                                 'X-Title': 'Crypto Reports Hub'
                             },
                             body: JSON.stringify({
-                                model: 'google/gemini-2.5-flash', // Fast, cheap Tier 2 model for reranking
+                                model: 'stepfun/step-3.5-flash:free', // Tier 3 Free Model for zero-cost reranking
                                 messages: [{ role: 'user', content: rerankPrompt }],
                                 temperature: 0.1,
                                 max_tokens: 2000

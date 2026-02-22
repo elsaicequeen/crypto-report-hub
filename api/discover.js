@@ -81,7 +81,7 @@ Return ONLY valid JSON (no markdown block):
                         'X-Title': 'Crypto Reports Hub'
                     },
                     body: JSON.stringify({
-                        model: 'deepseek/deepseek-chat', // Tier 2 DeepSeek V3.1 equivalent
+                        model: 'stepfun/step-3.5-flash:free', // Tier 3 Free Model
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.1,
                         max_tokens: 400

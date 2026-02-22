@@ -5,10 +5,10 @@ module.exports = async function handler(req, res) {
 
     try {
         const tavilyApiKey = (process.env.TAVILY_API_KEY || '').trim();
-        const openaiApiKey = (process.env.OPENAI_API_KEY || '').trim();
+        const openrouterApiKey = (process.env.OPENROUTER_API_KEY || '').trim();
 
-        if (!tavilyApiKey || !openaiApiKey) {
-            return res.status(500).json({ error: 'Missing TAVILY_API_KEY or OPENAI_API_KEY' });
+        if (!tavilyApiKey || !openrouterApiKey) {
+            return res.status(500).json({ error: 'Missing TAVILY_API_KEY or OPENROUTER_API_KEY' });
         }
 
         // --- 1. Proactive Search using Tavily ---
@@ -72,14 +72,16 @@ Return ONLY valid JSON (no markdown block):
   "score": 8
 }`;
 
-                const llmRes = await fetch('https://api.openai.com/v1/chat/completions', {
+                const llmRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${openaiApiKey}`
+                        'Authorization': `Bearer ${openrouterApiKey}`,
+                        'HTTP-Referer': 'https://crypto-reports-repo-app.vercel.app',
+                        'X-Title': 'Crypto Reports Hub'
                     },
                     body: JSON.stringify({
-                        model: 'gpt-4o-mini',
+                        model: 'anthropic/claude-3.5-sonnet',
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.1,
                         max_tokens: 400

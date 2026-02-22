@@ -6,8 +6,8 @@ module.exports = async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-    const apiKey = (process.env.OPENAI_API_KEY || '').trim();
-    if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
+    const apiKey = (process.env.OPENROUTER_API_KEY || '').trim();
+    if (!apiKey) return res.status(500).json({ error: 'OPENROUTER_API_KEY not configured' });
 
     const { url } = req.body || {};
     if (!url) return res.status(400).json({ error: 'url is required' });
@@ -56,14 +56,16 @@ URL: ${url}
 Page content:
 ${pageText}`;
 
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        const openaiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${apiKey}`,
+                'HTTP-Referer': 'https://crypto-reports-repo-app.vercel.app',
+                'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'anthropic/claude-3.5-sonnet',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.3,
                 max_tokens: 500

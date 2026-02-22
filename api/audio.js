@@ -11,7 +11,9 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
     const apiKey = (process.env.OPENAI_API_KEY || '').trim();
+    const openrouterApiKey = (process.env.OPENROUTER_API_KEY || '').trim();
     if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
+    if (!openrouterApiKey) return res.status(500).json({ error: 'OPENROUTER_API_KEY not configured' });
 
     const { url, title, source: rawSource, summary: rawSummary } = req.body || {};
     if (!title || !url) return res.status(400).json({ error: 'title and url are required' });
@@ -84,14 +86,16 @@ Write only the spoken words (no markdown).
 Report Title: ${title}
 Context: ${summaryText}`;
 
-        const scriptRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        const scriptRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${openrouterApiKey}`,
+                'HTTP-Referer': 'https://crypto-reports-repo-app.vercel.app',
+                'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'anthropic/claude-3.5-sonnet',
                 messages: [{ role: 'user', content: scriptPrompt }],
                 temperature: 0.3,
                 max_tokens: 250

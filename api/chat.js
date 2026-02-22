@@ -11,9 +11,11 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
     const apiKey = (process.env.OPENAI_API_KEY || '').trim();
+    const openrouterApiKey = (process.env.OPENROUTER_API_KEY || '').trim();
     const pineconeKey = (process.env.PINECONE_API_KEY || '').trim();
 
     if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
+    if (!openrouterApiKey) return res.status(500).json({ error: 'OPENROUTER_API_KEY not configured' });
 
     const body = req.body || {};
     const { url, question, history = [] } = body;
@@ -91,23 +93,24 @@ ${contextText}`
         }
         messages.push({ role: "user", content: question });
 
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        const openaiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${openrouterApiKey}`,
+                'HTTP-Referer': 'https://crypto-reports-repo-app.vercel.app',
+                'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'anthropic/claude-3.5-sonnet',
                 messages: messages,
-                temperature: 0.1,
                 max_tokens: 1000
             })
         });
 
         if (!openaiResponse.ok) {
             const err = await openaiResponse.text();
-            throw new Error(`OpenAI Chat failure: ${err}`);
+            throw new Error(`OpenRouter Chat failure: ${err}`);
         }
 
         const data = await openaiResponse.json();

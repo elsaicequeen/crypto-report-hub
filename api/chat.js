@@ -151,7 +151,7 @@ ${contextText}`
                 'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'anthropic/claude-3.5-sonnet',
+                model: 'anthropic/claude-sonnet-4.6',
                 messages: messages,
                 max_tokens: 1000
             })

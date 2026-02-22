@@ -84,7 +84,7 @@ CRITICAL RULE: DO NOT use generic filler phrases like "institutional adoption is
 Write only the spoken words (no markdown).
 
 Report Title: ${title}
-Context: ${summaryText}`;
+Context: ${contextText}`;
 
         const scriptRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
@@ -95,7 +95,7 @@ Context: ${summaryText}`;
                 'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'anthropic/claude-3.5-sonnet',
+                model: 'deepseek/deepseek-chat', // DeepSeek V3.1 equivalent on OpenRouter
                 messages: [{ role: 'user', content: scriptPrompt }],
                 temperature: 0.3,
                 max_tokens: 250

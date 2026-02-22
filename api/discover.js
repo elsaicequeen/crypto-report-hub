@@ -81,7 +81,7 @@ Return ONLY valid JSON (no markdown block):
                         'X-Title': 'Crypto Reports Hub'
                     },
                     body: JSON.stringify({
-                        model: 'anthropic/claude-3.5-sonnet',
+                        model: 'deepseek/deepseek-chat', // Tier 2 DeepSeek V3.1 equivalent
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.1,
                         max_tokens: 400

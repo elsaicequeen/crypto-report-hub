@@ -65,7 +65,7 @@ ${pageText}`;
                 'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'anthropic/claude-3.5-sonnet',
+                model: 'deepseek/deepseek-chat',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.3,
                 max_tokens: 500

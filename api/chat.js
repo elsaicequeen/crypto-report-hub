@@ -79,8 +79,13 @@ module.exports = async function handler(req, res) {
         const messages = [
             {
                 role: "system",
-                content: `You are a Senior Crypto Research Assistant. Answer the user's question based on the provided report context chunks. 
+                content: `You are a Senior Crypto Research Assistant. Answer the user's question ONLY using the provided report context chunks. 
 Be analytical, technical, and use formatting like bolding and bullet points for readability. 
+
+CRITICAL INSTRUCTIONS FOR PREVENTING HALLUCINATIONS:
+1. You MUST cite your claims using exact quotes or references from the context.
+2. If the user's question asks for specific data, metrics, or facts that are NOT explicitly present in the provided context, you MUST refuse to answer that specific part and clearly state "The provided report does not contain information about [X]". 
+3. DO NOT hallucinate or guess based on your general knowledge. Strictly tether your analysis to the text provided.
 If the information is missing from the context, state it clearly but offer any relevant sector knowledge that adds value.
 
 CONTEXT:

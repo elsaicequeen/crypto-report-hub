@@ -43,14 +43,58 @@ module.exports = async function handler(req, res) {
                     const index = pc.index('crypto-reports');
                     const queryResponse = await index.query({
                         vector: vector,
-                        topK: 5,
+                        topK: 10,
                         filter: { url: url }, // Only search chunks from this specific report
                         includeMetadata: true
                     });
 
                     if (queryResponse.matches && queryResponse.matches.length > 0) {
-                        console.log(`PINECONE HIT: Found ${queryResponse.matches.length} semantic chunks.`);
-                        contextText = queryResponse.matches.map(m => m.metadata.text).join('\n\n---\n\n');
+                        console.log(`PINECONE HIT: Found ${queryResponse.matches.length} semantic chunks. Reranking for strict relevance...`);
+
+                        // --- ADVANCED RAG: LLM RERANKING (Zero Hallucination Filter) ---
+                        const chunks = queryResponse.matches.map((m, i) => `[Chunk ${i + 1}]\n${m.metadata.text}`).join('\n\n');
+
+                        const rerankPrompt = `You are a strict data filter. Analyze the user's question and the provided text chunks. 
+Extract ONLY the exact sentences or paragraphs from the chunks that contain factual data directly answering the question. 
+If a chunk is irrelevant, discard it completely. 
+If NO chunks answer the question, output exactly "NO_RELEVANT_DATA". 
+Do not answer the question yourself or add any extra text. Return ONLY the extracted relevant text exactly as it appears.
+
+Question: ${question}
+
+Context Chunks:
+${chunks}`;
+
+                        const rerankRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${openrouterApiKey}`,
+                                'HTTP-Referer': 'https://crypto-reports-repo-app.vercel.app',
+                                'X-Title': 'Crypto Reports Hub'
+                            },
+                            body: JSON.stringify({
+                                model: 'google/gemini-2.5-flash', // Fast, cheap Tier 2 model for reranking
+                                messages: [{ role: 'user', content: rerankPrompt }],
+                                temperature: 0.1,
+                                max_tokens: 2000
+                            })
+                        });
+
+                        if (rerankRes.ok) {
+                            const rerankData = await rerankRes.json();
+                            const filteredContext = rerankData.choices[0]?.message?.content || '';
+                            if (filteredContext.includes('NO_RELEVANT_DATA')) {
+                                contextText = "[No relevant data found in the document. You MUST state that the document does not contain this information and refuse to answer.]";
+                                console.log("RERANKER: No relevant data found. Blocking hallucination.");
+                            } else {
+                                contextText = filteredContext;
+                                console.log("RERANKER: Extracted relevant facts successfully.");
+                            }
+                        } else {
+                            console.warn("Reranker failed, falling back to all chunks");
+                            contextText = queryResponse.matches.map(m => m.metadata.text).join('\n\n---\n\n');
+                        }
                     }
                 }
             } catch (pcErr) {

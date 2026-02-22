@@ -11,7 +11,7 @@ This application allows users to upload local PDFs or external links to crypto r
 *   **Database:** Google Sheets (for structured metadata and easy administrative control).
 *   **Document Storage & CDN:** Vercel Blob Storage (hosts PDF files and MP3 audio clips for instant, zero-latency delivery).
 *   **Vector Database (Semantic Search):** Pinecone (indexes all report chunks for instant "Ask AI" queries).
-*   **AI Processing:** OpenAI GPT-4o-mini (Summarization & Extraction), OpenAI TTS (Audio Generation), and Jina Reader API (PDF & Web Scraping).
+*   **AI Processing:** Claude 4.6 Sonnet (Deep RAG Chat), DeepSeek V3.1 (Summarization & Scripts), OpenAI TTS (Audio Generation), and Jina Reader API (PDF & Web Scraping).
 
 ## Key Features
 
@@ -46,7 +46,7 @@ BLOB_READ_WRITE_TOKEN="your_vercel_blob_token"
 To ensure this project scales to an enterprise level without suffering from vendor lock-in or LLM hallucinations, future development should adhere to these architectural principles:
 
 1. **Model Agnosticism (OpenRouter):** Transition away from direct OpenAI SDK integrations. Route all LLM calls through [OpenRouter](https://openrouter.ai/) to consolidate billing and dynamically hot-swap models. 
-2. **Task-Specific LLM Routing:** Use deep reasoning models (like `Claude 3.5 Sonnet` or `o3-mini`) for complex, multi-page PDF extraction and standard models (like `gpt-4o-mini`) for simple data formatting.
+2. **Task-Specific LLM Routing:** Use deep reasoning models (like `Claude Sonnet 4.6` or `o3-mini`) for complex, multi-page PDF extraction and chat, and standard Tier-2 models (like `DeepSeek V3.1`) for cheap background data formatting.
 3. **Advanced RAG & Forced Citations:** Upgrade the Pinecone semantic search to use Cohere Reranking. Restrict the LLM with structural prompts that demand exact page citations for every summarized claim to definitively eliminate AI hallucinations.
 4. **Relational Database Migration:** Migrate the backend data store from Google Sheets to a robust relational database like **Vercel Postgres** or **Supabase** to support org-wide usage and thousands of concurrent reads/writes.
 5. **Role-based Authentication:** Implement **NextAuth.js** for secure organizational SSO to replace the current shared-password gate.

@@ -87,8 +87,11 @@ Return ONLY valid JSON (no markdown block):
   "score": 8
 }`;
 
+                const llmController = new AbortController();
+                const llmTimeout = setTimeout(() => llmController.abort(), 25000); // 25s timeout
                 const llmRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
+                    signal: llmController.signal,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${openrouterApiKey}`,
@@ -102,6 +105,7 @@ Return ONLY valid JSON (no markdown block):
                         max_tokens: 400
                     })
                 });
+                clearTimeout(llmTimeout);
 
                 if (!llmRes.ok) throw new Error("LLM failure");
 

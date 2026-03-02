@@ -69,18 +69,20 @@ module.exports = async function handler(req, res) {
         for (const item of searchResults) {
             try {
                 // Send the URL and Tavily's snippet to GPT to decide if it's a real report
+                const providedDate = item.published_date ? item.published_date.split('T')[0] : new Date().toISOString().split('T')[0];
                 const prompt = `You are an expert analyst reviewing a search result to decide if it is a high-quality, institutional Crypto Research Report.
 Extract the metadata and rate its quality from 1 to 10 (10 = institutional deep-dive, 1 = short news blurb). If it is just a news article or opinion piece, score it a 3 or lower.
 
 URL: ${item.url}
 Title: ${item.title}
 Snippet: ${item.content}
+Tavily Published Date: ${providedDate}
 
 Return ONLY valid JSON (no markdown block):
 {
   "title": "Cleaned Title",
   "source": "Best guess at publisher (e.g. JPMorgan, Messari, etc.)",
-  "date": "YYYY-MM-DD",
+  "date": "YYYY-MM-DD", // IMPORTANT: Extract the exact publication date from the Snippet if found. If not, use the Tavily Published Date provided above. Do NOT guess the 1st of the month.
   "summary": "3 sentence summary based on the snippet",
   "tags": ["Bitcoin", "Ethereum", "DeFi", "Macro", "Regulation", "Analytics", "L2s", "Research"],
   "icon": "📄",

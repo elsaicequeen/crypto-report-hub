@@ -25,6 +25,8 @@ module.exports = async function handler(req, res) {
             `DeFi protocol research report ${currentYear} Grayscale OR Pantera OR Galaxy`,
             `crypto market outlook ${dateContext} institutional research`,
             `blockchain developer activity report ${currentYear} Electric Capital OR Alchemy OR Dune`,
+            `crypto blockchain research report ${currentYear} Chainalysis OR "ARK Invest" OR "ARK Research" filetype:pdf`,
+            `digital assets crypto outlook ${currentYear} "Standard Chartered" OR Citibank OR Citi OR "Bloomberg Intelligence" filetype:pdf`,
         ];
 
         // Run all queries in parallel to scan broadly, then deduplicate by URL

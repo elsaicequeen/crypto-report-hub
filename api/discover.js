@@ -99,7 +99,7 @@ Return ONLY valid JSON (no markdown block):
                         'X-Title': 'Crypto Reports Hub'
                     },
                     body: JSON.stringify({
-                        model: 'minimax/minimax-m2.5', // Tier 2: MiniMax M2.5 - reliable JSON output
+                        model: 'deepseek/deepseek-chat', // Tier 2: DeepSeek V3.1 - proven reliable for JSON
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.1,
                         max_tokens: 400

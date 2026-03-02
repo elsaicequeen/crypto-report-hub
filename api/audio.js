@@ -95,7 +95,7 @@ Context: ${contextText}`;
                 'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'deepseek/deepseek-chat', // DeepSeek V3.1 equivalent on OpenRouter
+                model: 'minimax/minimax-m2.5', // Tier 2: MiniMax M2.5 - 197K context, $0.30/$1.10
                 messages: [{ role: 'user', content: scriptPrompt }],
                 temperature: 0.3,
                 max_tokens: 250

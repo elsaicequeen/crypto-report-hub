@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
                 body: JSON.stringify({
                     api_key: tavilyApiKey,
                     query: q,
-                    search_depth: "advanced",
+                    search_depth: "basic",
                     include_images: false,
                     include_answer: false,
                     max_results: 3,
@@ -96,7 +96,7 @@ Return ONLY valid JSON (no markdown block):
                         'X-Title': 'Crypto Reports Hub'
                     },
                     body: JSON.stringify({
-                        model: 'stepfun/step-3.5-flash:free', // Tier 3 Free Model
+                        model: 'minimax/minimax-m2.5', // Tier 2: MiniMax M2.5 - reliable JSON output
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.1,
                         max_tokens: 400

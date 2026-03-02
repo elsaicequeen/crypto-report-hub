@@ -12,40 +12,53 @@ module.exports = async function handler(req, res) {
         }
 
         // --- 1. Proactive Search using Tavily ---
-        // We search for recent high-quality crypto reports published in the last week.
+        // Inject today's date to force fresh, recent results only.
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.toLocaleString('en-US', { month: 'long' });
+        const dateContext = `${currentMonth} ${currentYear}`;
+
         const searchQueries = [
-            "institutional crypto research report filetype:pdf",
-            "digital assets outlook report \"JPMorgan\" OR \"Bernstein\" OR \"Messari\" filetype:pdf",
-            "state of crypto report a16z OR coindesk OR the block filetype:pdf"
+            `institutional crypto research report ${dateContext} site:messari.io OR site:coinbase.com OR site:binance.com`,
+            `digital assets outlook ${currentYear} JPMorgan OR Bernstein OR a16z filetype:pdf`,
+            `state of crypto ${currentYear} quarterly report Messari OR CoinDesk OR TheBlock filetype:pdf`,
+            `DeFi protocol research report ${currentYear} Grayscale OR Pantera OR Galaxy`,
+            `crypto market outlook ${dateContext} institutional research`,
+            `blockchain developer activity report ${currentYear} Electric Capital OR Alchemy OR Dune`,
         ];
 
-        // Pick a random query each run, or run them all. For cost/speed, let's just run the first one for now.
-        const query = searchQueries[Math.floor(Math.random() * searchQueries.length)];
+        // Run all queries in parallel to scan broadly, then deduplicate by URL
+        const searchRes = await Promise.allSettled(searchQueries.map(q =>
+            fetch('https://api.tavily.com/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    api_key: tavilyApiKey,
+                    query: q,
+                    search_depth: "advanced",
+                    include_images: false,
+                    include_answer: false,
+                    max_results: 3,
+                    days: 30  // Last 30 days only
+                })
+            }).then(r => r.json())
+        ));
 
-        const tavilyRes = await fetch('https://api.tavily.com/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                api_key: tavilyApiKey,
-                query: query,
-                search_depth: "advanced",
-                include_images: false,
-                include_answer: false,
-                max_results: 5, // Keep it to top 5 to manage AI costs
-                days_back: 7    // Only from the last week
-            })
-        });
+        // Flatten and deduplicate by URL
+        const seenUrls = new Set();
+        const searchResults = searchRes
+            .filter(r => r.status === 'fulfilled' && r.value?.results)
+            .flatMap(r => r.value.results)
+            .filter(item => {
+                if (seenUrls.has(item.url)) return false;
+                seenUrls.add(item.url);
+                return true;
+            });
 
-        if (!tavilyRes.ok) {
-            const err = await tavilyRes.text();
-            throw new Error(`Tavily search failed: ${err}`);
-        }
-
-        const tavilyData = await tavilyRes.json();
-        const searchResults = tavilyData.results || [];
+        const query = searchQueries[0]; // for logging only
 
         if (searchResults.length === 0) {
-            return res.json({ message: 'No new reports found in search this week.' });
+            return res.json({ message: 'No new reports found this month.' });
         }
 
         // --- 2. LLM Dragnet Filter ---

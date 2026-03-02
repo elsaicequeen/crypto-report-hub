@@ -107,8 +107,10 @@ Return ONLY valid JSON (no markdown block):
 
                 const llmData = await llmRes.json();
                 const content = llmData.choices[0]?.message?.content || '';
-                const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                const metadata = JSON.parse(jsonStr);
+                // Robust JSON extraction - find the first {...} block regardless of markdown wrapping
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error(`No JSON found in response: ${content.substring(0, 100)}`);
+                const metadata = JSON.parse(jsonMatch[0]);
 
                 metadata.url = item.url;
                 metadata.id = Math.floor(100000 + Math.random() * 900000);

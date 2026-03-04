@@ -102,13 +102,19 @@ Context: ${contextText}`;
                 model: 'minimax/minimax-m2.5', // 197K context, fast, cheap
                 messages: [{ role: 'user', content: scriptPrompt }],
                 temperature: 0.3,
-                max_tokens: 250
+                max_tokens: 600 // Increased: MiniMax uses tokens for reasoning before output
             })
         });
 
         if (!scriptRes.ok) throw new Error("Failed to generate script");
         const scriptData = await scriptRes.json();
-        const spokenText = scriptData.choices[0]?.message?.content || "Could not generate summary.";
+        let spokenText = scriptData.choices?.[0]?.message?.content || '';
+
+        // MiniMax may return null content if max_tokens ran out during reasoning phase
+        if (!spokenText || spokenText.trim().length < 10) {
+            console.warn('MiniMax returned empty/null content, falling back to a basic summary.');
+            spokenText = `${title} by ${source}. ${rawSummary || 'This is an institutional crypto research report.'}`;
+        }
 
         const ttsRes = await fetch('https://api.openai.com/v1/audio/speech', {
             method: 'POST',

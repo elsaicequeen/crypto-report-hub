@@ -12,8 +12,10 @@ module.exports = async function handler(req, res) {
 
     const apiKey = (process.env.OPENAI_API_KEY || '').trim();
     const openrouterApiKey = (process.env.OPENROUTER_API_KEY || '').trim();
+    const firecrawlApiKey = (process.env.FIRECRAWL_API_KEY || '').trim();
     if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY not configured' });
     if (!openrouterApiKey) return res.status(500).json({ error: 'OPENROUTER_API_KEY not configured' });
+    if (!firecrawlApiKey) console.warn('[Audio] FIRECRAWL_API_KEY not set, will fall back to short summary');
 
     const { url, title, source: rawSource, summary: rawSummary } = req.body || {};
     if (!title || !url) return res.status(400).json({ error: 'title and url are required' });
@@ -44,27 +46,29 @@ module.exports = async function handler(req, res) {
         const source = rawSource || "An independent researcher";
 
         // ALWAYS try to fetch the full text of the report to generate a deep, 60-second summary
-        if (url) {
+        if (url && firecrawlApiKey) {
             try {
-                console.log(`Fetching full text for audio generation via Jina: ${url}`);
-                const pageResponse = await fetch(`https://r.jina.ai/${url}`, {
+                console.log(`Fetching full text for audio generation via Firecrawl: ${url}`);
+                const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+                    method: 'POST',
                     headers: {
-                        'Accept': 'text/plain',
-                        'X-No-Cache': 'true',
-                        'X-Return-Format': 'markdown'
-                    }
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${firecrawlApiKey}`
+                    },
+                    body: JSON.stringify({ url, formats: ['markdown'] })
                 });
-                if (pageResponse.ok) {
-                    const fullText = await pageResponse.text();
-                    // Basic check to see if Jina actually extracted meaningful content
-                    if (fullText && fullText.length > 500) {
-                        // Pass the first chunks into the context to ensure a rich 60-second summary
-                        contextText = fullText.substring(0, 15000);
-                    }
+                const fcData = await fcRes.json();
+                if (fcData.success && fcData.data && fcData.data.markdown && fcData.data.markdown.length > 500) {
+                    contextText = fcData.data.markdown.substring(0, 15000);
+                    console.log(`Firecrawl OK: ${contextText.length} chars extracted.`);
+                } else {
+                    console.warn('Firecrawl returned insufficient content:', fcData?.data?.markdown?.length || 0, 'chars');
                 }
             } catch (e) {
-                console.warn('Scraping failed, falling back...');
+                console.warn('Firecrawl scraping failed, falling back to short summary:', e.message);
             }
+        } else if (!firecrawlApiKey) {
+            console.warn('No Firecrawl key, skipping full-text scrape.');
         }
 
         // Fallback safely to the short UI summary if the full report couldn't be extracted
@@ -95,7 +99,7 @@ Context: ${contextText}`;
                 'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'anthropic/claude-3-5-haiku', // Switched to Haiku for speed/reliability since MiniMax was returning 500 errors
+                model: 'minimax/minimax-m2.5', // 197K context, fast, cheap
                 messages: [{ role: 'user', content: scriptPrompt }],
                 temperature: 0.3,
                 max_tokens: 250

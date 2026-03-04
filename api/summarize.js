@@ -49,7 +49,7 @@ module.exports = async function handler(req, res) {
 }
 
 Available tags to choose from (pick 1-3 most relevant):
-Bitcoin, Ethereum, DeFi, L2s, Macro, Regulation, Annual Report, Analytics, Infrastructure, NFTs, Research
+Bitcoin, Ethereum, DeFi, TradFi, Macro, Regulation, Annual Report, Analytics, Infrastructure, Research
 
 URL: ${url}
 

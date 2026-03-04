@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
                     include_images: false,
                     include_answer: false,
                     max_results: 3,
-                    days: 30  // Last 30 days only
+                    days: 90  // Last 90 days only
                 })
             }).then(r => r.json())
         ));
@@ -84,7 +84,7 @@ Return ONLY valid JSON (no markdown block):
   "source": "Best guess at publisher (e.g. JPMorgan, Messari, etc.)",
   "date": "YYYY-MM-DD", // IMPORTANT: Extract the exact publication date from the Snippet if found. If not, use the Tavily Published Date provided above. Do NOT guess the 1st of the month.
   "summary": "3 sentence summary based on the snippet",
-  "tags": ["Bitcoin", "Ethereum", "DeFi", "Macro", "Regulation", "Analytics", "L2s", "Research"],
+  "tags": ["Bitcoin", "Ethereum", "DeFi", "Macro", "Regulation", "Analytics", "TradFi", "Research"],
   "icon": "📄",
   "score": 8
 }`;

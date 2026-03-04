@@ -156,6 +156,7 @@ function createReportRow(report) {
           <img src="${thumbnailUrl}" class="row-thumbnail" onerror="if(this.src !== '${faviconUrl}' && !this.dataset.t) { this.dataset.t=1; this.src = '${faviconUrl}'; } else if (!this.dataset.s) { this.dataset.s=1; this.src = window.generateFallbackSVG('${report.source.replace(/'/g, "\\'")}'); this.classList.add('is-fallback'); } else { this.style.display = 'none'; }" alt=""/>
           <span class="row-title">${report.title}</span>
           <span class="row-type">${isNew ? '🆕' : ''} ${isPDF ? '📄' : ''}</span>
+          <p class="row-summary" style="font-size: 0.85rem; color: var(--text-tertiary); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.4;">${report.summary || ''}</p>
         </div>
       </td>
       <td class="col-source">${report.source}</td>

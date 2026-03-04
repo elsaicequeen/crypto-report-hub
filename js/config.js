@@ -28,13 +28,12 @@ const APP_CONFIG = {
         'Bitcoin',
         'Ethereum',
         'DeFi',
-        'L2s',
+        'TradFi',
         'Macro',
         'Regulation',
         'Annual Report',
         'Analytics',
         'Infrastructure',
-        'NFTs',
     ]
 };
 

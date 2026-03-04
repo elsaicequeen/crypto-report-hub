@@ -68,7 +68,7 @@ const MODAL_HTML = `
         <div class="form-group">
           <label for="reportTags">Categories (comma-separated)</label>
           <input type="text" id="reportTags" placeholder="e.g. Bitcoin, Annual Report, DeFi">
-          <p class="form-hint">Bitcoin, Ethereum, DeFi, L2s, Macro, Regulation, Analytics, Infrastructure, NFTs, Annual Report</p>
+          <p class="form-hint">Bitcoin, Ethereum, DeFi, TradFi, Macro, Regulation, Analytics, Infrastructure, Annual Report</p>
         </div>
 
         <div class="form-group">

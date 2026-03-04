@@ -3,7 +3,7 @@
 let currentCategory = 'All';
 let currentSearch = '';
 let activeTag = null;
-let currentView = 'cards';
+let currentView = 'table';
 
 function filterReports() {
     const data = window.ReportsModule.data;

@@ -148,6 +148,7 @@ Return ONLY valid JSON (no markdown block):
 
                 metadata.url = item.url;
                 metadata.id = Math.floor(100000 + Math.random() * 900000);
+                metadata.added_on = new Date().toISOString();
 
                 // Auto-approval logic
                 if (metadata.score >= 8) {

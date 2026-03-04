@@ -132,6 +132,9 @@ async function handlePost(req, res) {
             }
         }
 
+        // Add the system timestamp per user request
+        reportData.added_on = new Date().toISOString();
+
         // Server-to-server call to Apps Script — no CORS issues
         const encoded = encodeURIComponent(JSON.stringify(reportData));
         const scriptUrl = `${appsScriptUrl}?data=${encoded}`;

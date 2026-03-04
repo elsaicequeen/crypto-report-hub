@@ -150,22 +150,33 @@ function createReportRow(report) {
 
   return `
     <tr class="report-row" data-id="${report.id}" data-url="${link || ''}">
-      <td class="col-date">${formattedDate}</td>
-      <td class="col-title">
-        <div class="row-title-wrap">
-          <img src="${thumbnailUrl}" class="row-thumbnail" onerror="if(this.src !== '${faviconUrl}' && !this.dataset.t) { this.dataset.t=1; this.src = '${faviconUrl}'; } else if (!this.dataset.s) { this.dataset.s=1; this.src = window.generateFallbackSVG('${report.source.replace(/'/g, "\\'")}'); this.classList.add('is-fallback'); } else { this.style.display = 'none'; }" alt=""/>
-          <span class="row-title">${report.title}</span>
-          <span class="row-type">${isNew ? '🆕' : ''} ${isPDF ? '📄' : ''}</span>
-          <p class="row-summary" style="font-size: 0.85rem; color: var(--text-tertiary); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.4;">${report.summary || ''}</p>
+      <td class="col-date" style="white-space: nowrap; font-weight: 500; color: var(--text-secondary);">${formattedDate}</td>
+      <td class="col-title" style="padding: 16px;">
+        <div class="row-title-wrap" style="display: flex; gap: 16px; align-items: flex-start;">
+          <img src="${thumbnailUrl}" class="row-thumbnail" style="width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-color);" onerror="if(this.src !== '${faviconUrl}' && !this.dataset.t) { this.dataset.t=1; this.src = '${faviconUrl}'; } else if (!this.dataset.s) { this.dataset.s=1; this.src = window.generateFallbackSVG('${report.source.replace(/'/g, "\\'")}'); this.classList.add('is-fallback'); } else { this.style.display = 'none'; }" alt=""/>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="row-title" style="font-weight: 600; font-size: 1.05rem; color: var(--text-primary); margin: 0;">${report.title}</span>
+              ${isNew ? '<span style="font-size: 0.75rem; background: #22c55e20; color: #22c55e; padding: 2px 6px; border-radius: 4px; font-weight: 600;">NEW</span>' : ''} 
+              ${isPDF ? '<span style="font-size: 0.75rem; background: #ef444420; color: #ef4444; padding: 2px 6px; border-radius: 4px; font-weight: 600;">PDF</span>' : ''}
+            </div>
+            <p class="row-summary" style="font-size: 0.85rem; color: var(--text-tertiary); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; line-height: 1.5; max-width: 600px;">
+              ${report.summary || '<em>No summary available.</em>'}
+            </p>
+          </div>
         </div>
       </td>
-      <td class="col-source">${report.source}</td>
+      <td class="col-source" style="font-weight: 500;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          ${report.icon || '📄'} ${report.source}
+        </div>
+      </td>
       <td class="col-tags">${tagsHTML}</td>
       <td class="col-actions">
-        <div style="display:flex; gap:8px;">
-          <button class="btn-ask-ai ask-ai-btn" data-url="${link || ''}" data-title="${report.title}" title="Ask AI">✨ Ask AI</button>
-          <button class="btn-listen listen-btn" data-url="${link || ''}" data-title="${report.title}" data-source="${report.source}" data-summary="${report.summary}" title="Listen to summary">🔊</button>
-          <button class="copy-btn copy-btn-sm" data-url="${link || ''}" title="Copy link">📋</button>
+        <div style="display:flex; gap:8px; align-items: center;">
+          <button class="btn-ask-ai ask-ai-btn" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;" data-url="${link || ''}" data-title="${report.title}" title="Ask AI about this report">✨ Ask AI</button>
+          <button class="btn-listen listen-btn" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;" data-url="${link || ''}" data-title="${report.title}" data-source="${report.source}" data-summary="${report.summary}" title="Listen to 1-min summary">🔊 Listen</button>
+          <button class="copy-btn copy-btn-sm" style="padding: 6px;" data-url="${link || ''}" title="Copy link">📋</button>
         </div>
       </td>
     </tr>

@@ -154,13 +154,8 @@ function renderFilteredReports() {
 
     const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    if (currentView === 'table') {
-        container.className = 'reports-table-container';
-        renderTableView(sorted, container);
-    } else {
-        container.className = 'reports-grid';
-        renderCardsView(sorted, container);
-    }
+    container.className = 'reports-table-container';
+    renderTableView(sorted, container);
 }
 
 function updateStats() {

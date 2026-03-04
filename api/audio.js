@@ -95,7 +95,7 @@ Context: ${contextText}`;
                 'X-Title': 'Crypto Reports Hub'
             },
             body: JSON.stringify({
-                model: 'minimax/minimax-m2.5', // Tier 2: MiniMax M2.5 - 197K context, $0.30/$1.10
+                model: 'anthropic/claude-3-5-haiku', // Switched to Haiku for speed/reliability since MiniMax was returning 500 errors
                 messages: [{ role: 'user', content: scriptPrompt }],
                 temperature: 0.3,
                 max_tokens: 250

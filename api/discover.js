@@ -6,9 +6,10 @@ module.exports = async function handler(req, res) {
     try {
         const tavilyApiKey = (process.env.TAVILY_API_KEY || '').trim();
         const openrouterApiKey = (process.env.OPENROUTER_API_KEY || '').trim();
+        const firecrawlApiKey = (process.env.FIRECRAWL_API_KEY || '').trim();
 
-        if (!tavilyApiKey || !openrouterApiKey) {
-            return res.status(500).json({ error: 'Missing TAVILY_API_KEY or OPENROUTER_API_KEY' });
+        if (!tavilyApiKey || !openrouterApiKey || !firecrawlApiKey) {
+            return res.status(500).json({ error: 'Missing TAVILY, OPENROUTER, or FIRECRAWL keys' });
         }
 
         // --- 1. Proactive Search using Tavily ---
@@ -19,14 +20,13 @@ module.exports = async function handler(req, res) {
         const dateContext = `${currentMonth} ${currentYear}`;
 
         const searchQueries = [
-            `institutional crypto research report ${dateContext} site:messari.io OR site:coinbase.com OR site:binance.com`,
-            `digital assets outlook ${currentYear} JPMorgan OR Bernstein OR a16z filetype:pdf`,
-            `state of crypto ${currentYear} quarterly report Messari OR CoinDesk OR TheBlock filetype:pdf`,
-            `DeFi protocol research report ${currentYear} Grayscale OR Pantera OR Galaxy`,
-            `crypto market outlook ${dateContext} institutional research`,
-            `blockchain developer activity report ${currentYear} Electric Capital OR Alchemy OR Dune`,
-            `crypto blockchain research report ${currentYear} Chainalysis OR "ARK Invest" OR "ARK Research" filetype:pdf`,
-            `digital assets crypto outlook ${currentYear} "Standard Chartered" OR Citibank OR Citi OR "Bloomberg Intelligence" filetype:pdf`,
+            `institutional crypto research report ${dateContext} site:messari.io OR site:coinbase.com/institutional`,
+            `digital assets outlook ${currentYear} JPMorgan OR Bernstein filetype:pdf -site:binance.com -site:cointelegraph.com`,
+            `state of crypto ${currentYear} quarterly report Messari OR TheBlock filetype:pdf`,
+            `DeFi protocol research report ${currentYear} site:grayscale.com OR site:galaxy.com`,
+            `blockchain developer activity report ${currentYear} site:developerreport.com OR site:electriccapital.com`,
+            `crypto blockchain research report ${currentYear} site:chainalysis.com OR "ARK Invest" filetype:pdf`,
+            `digital assets crypto outlook ${currentYear} Citibank OR "Standard Chartered" filetype:pdf -site:yahoo.com`
         ];
 
         // Run all queries in parallel to scan broadly, then deduplicate by URL
@@ -69,28 +69,56 @@ module.exports = async function handler(req, res) {
         for (const item of searchResults) {
             try {
                 // Send the URL and Tavily's snippet to GPT to decide if it's a real report
-                const providedDate = item.published_date ? item.published_date.split('T')[0] : new Date().toISOString().split('T')[0];
-                const prompt = `You are an expert analyst reviewing a search result to decide if it is a high-quality, institutional Crypto Research Report.
-Extract the metadata and rate its quality from 1 to 10 (10 = institutional deep-dive, 1 = short news blurb). If it is just a news article or opinion piece, score it a 3 or lower.
+                // Scrape full page content using Firecrawl
+                console.log(`Scraping: ${item.url}`);
+                const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${firecrawlApiKey}`
+                    },
+                    body: JSON.stringify({ url: item.url, formats: ['markdown'] })
+                });
+                const fcData = await fcRes.json();
+
+                let reportMarkdown = item.content; // fallback to snippet
+                let extractedDate = item.published_date ? item.published_date.split('T')[0] : null;
+
+                if (fcData.success && fcData.data) {
+                    reportMarkdown = (fcData.data.markdown || item.content).substring(0, 6000); // Send first 6k chars to LLM
+                    if (fcData.data.metadata && fcData.data.metadata['article:published_time']) {
+                        extractedDate = fcData.data.metadata['article:published_time'].split('T')[0];
+                    }
+                }
+
+                if (!extractedDate) {
+                    extractedDate = "Date not clearly found in metadata, please infer from text or default to today: " + new Date().toISOString().split('T')[0];
+                }
+
+                const prompt = `You are a Tier 1 expert analyst vetting a web scrape to decide if it is a high-quality, institutional Crypto Research Report.
+Extract the metadata and rate its quality from 1 to 10 (10 = institutional deep-dive PDF or long-form report, 1 = short news blurb, aggregator, or social post). 
+If it is just a news article covering a report (but not the report itself) or an opinion piece, score it a 4 or lower.
 
 URL: ${item.url}
 Title: ${item.title}
-Snippet: ${item.content}
-Tavily Published Date: ${providedDate}
+Report Content (Scraped Markdown Truncated): 
+${reportMarkdown}
+
+Provided Metadata Date (if any): ${extractedDate}
 
 Return ONLY valid JSON (no markdown block):
 {
   "title": "Cleaned Title",
-  "source": "Best guess at publisher (e.g. JPMorgan, Messari, etc.)",
-  "date": "YYYY-MM-DD", // IMPORTANT: Extract the exact publication date from the Snippet if found. If not, use the Tavily Published Date provided above. Do NOT guess the 1st of the month.
-  "summary": "3 sentence summary based on the snippet",
+  "source": "Publisher (e.g. JPMorgan, Messari, Grayscale, etc.)",
+  "date": "YYYY-MM-DD", // IMPORTANT: Extract exact publication date from the content if possible. If not found, use the Provided Metadata Date. If you infer the date or use today's fallback, it's fine, do not discard.
+  "summary": "3 sentence summary of the report. If the date was approximated/inferred, append '[Date Approximated]' to the end of this summary.",
   "tags": ["Bitcoin", "Ethereum", "DeFi", "Macro", "Regulation", "Analytics", "TradFi", "Research"],
   "icon": "📄",
   "score": 8
 }`;
 
                 const llmController = new AbortController();
-                const llmTimeout = setTimeout(() => llmController.abort(), 25000); // 25s timeout
+                const llmTimeout = setTimeout(() => llmController.abort(), 45000); // 45s timeout for Claude
                 const llmRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     signal: llmController.signal,
@@ -101,10 +129,10 @@ Return ONLY valid JSON (no markdown block):
                         'X-Title': 'Crypto Reports Hub'
                     },
                     body: JSON.stringify({
-                        model: 'deepseek/deepseek-chat', // Tier 2: DeepSeek V3.1 - proven reliable for JSON
+                        model: 'anthropic/claude-sonnet-4.6', // Tier 1: Claude Sonnet 4.6
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.1,
-                        max_tokens: 400
+                        max_tokens: 450
                     })
                 });
                 clearTimeout(llmTimeout);

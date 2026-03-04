@@ -46,9 +46,9 @@ module.exports = async function handler(req, res) {
             }).then(r => r.json())
         ));
 
-        // Flatten and deduplicate by URL
+        // Flatten and deduplicate by URL within search results
         const seenUrls = new Set();
-        const searchResults = searchRes
+        let searchResults = searchRes
             .filter(r => r.status === 'fulfilled' && r.value?.results)
             .flatMap(r => r.value.results)
             .filter(item => {
@@ -57,10 +57,34 @@ module.exports = async function handler(req, res) {
                 return true;
             });
 
-        const query = searchQueries[0]; // for logging only
+        // --- DEDUP AGAINST DATABASE ---
+        // Fetch existing URLs from Google Sheet so we never re-publish a duplicate
+        try {
+            const googleApiKey = (process.env.GOOGLE_API_KEY || '').trim();
+            const spreadsheetId = (process.env.SPREADSHEET_ID || '').trim();
+            const sheetName = (process.env.SHEET_NAME || 'crypto-reports-template').trim();
+            if (googleApiKey && spreadsheetId) {
+                const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(sheetName)}?key=${googleApiKey}`;
+                const sheetRes = await fetch(sheetUrl);
+                if (sheetRes.ok) {
+                    const sheetData = await sheetRes.json();
+                    const rows = sheetData.values || [];
+                    const headers = rows[0] ? rows[0].map(h => h.trim().toLowerCase()) : [];
+                    const urlIdx = headers.indexOf('url');
+                    if (urlIdx >= 0) {
+                        const existingUrls = new Set(rows.slice(1).map(r => (r[urlIdx] || '').trim()).filter(Boolean));
+                        const before = searchResults.length;
+                        searchResults = searchResults.filter(item => !existingUrls.has(item.url));
+                        console.log(`Dedup: ${before - searchResults.length} already in DB, ${searchResults.length} new to process.`);
+                    }
+                }
+            }
+        } catch (dedupErr) {
+            console.warn('Dedup check failed, proceeding without:', dedupErr.message);
+        }
 
         if (searchResults.length === 0) {
-            return res.json({ message: 'No new reports found this month.' });
+            return res.json({ message: 'No new reports found (all results already in database).' });
         }
 
         // --- 2. LLM Dragnet Filter ---

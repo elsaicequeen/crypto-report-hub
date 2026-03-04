@@ -52,71 +52,7 @@ function isNewReport(report) {
   return reportDate >= cutoff;
 }
 
-// Generate report card HTML
-function createReportCard(report) {
-  const formattedDate = new Date(report.date).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
-  });
-
-  const tagsHTML = (report.tags || [])
-    .slice(0, 3)
-    .map(tag => `<span class="tag" data-tag="${tag}">${tag}</span>`)
-    .join('');
-
-  const icon = report.icon || '📄';
-  const link = report.pdfPath || report.url;
-  const isNew = isNewReport(report);
-  const isPDF = Boolean(report.pdfPath);
-
-  let domain = 'example.com';
-  try {
-    if (report.url) domain = new URL(report.url).hostname;
-  } catch (e) { }
-
-  const faviconUrl = `https://s2.googleusercontent.com/s2/favicons?domain=${domain}&sz=128`;
-  let thumbnailUrl = '';
-
-  // Prefer the link text for OG extraction, otherwise generic fallback
-  if (link && !isPDF) { // PDF direct links won't have HTML OG tags
-    thumbnailUrl = `/api/og-image?url=${encodeURIComponent(link)}`;
-  } else {
-    thumbnailUrl = faviconUrl;
-  }
-
-  // Use a neat trick: load the OG image first. If it fails (404), swap to the favicon, and update classes.
-  return `
-    <article class="report-card card-glass" data-id="${report.id}" data-url="${link || ''}">
-      <div class="card-header">
-        <div class="card-badges">
-          ${isNew ? '<span class="new-badge">🆕 New</span>' : ''}
-          ${isPDF ? '<span class="pdf-badge">PDF</span>' : ''}
-          ${report.verified ? '<span class="verified-badge" title="Verified">✓</span>' : ''}
-        </div>
-        <span class="card-date">${formattedDate}</span>
-      </div>
-      <div class="card-body">
-        <div class="card-thumbnail">
-          <img src="${thumbnailUrl}" alt="${report.source} preview" class="dynamic-thumbnail ${thumbnailUrl === faviconUrl ? 'is-favicon' : 'is-og'}" onerror="if(this.src !== '${faviconUrl}' && !this.dataset.t) { this.dataset.t=1; this.src = '${faviconUrl}'; this.classList.remove('is-og'); this.classList.add('is-favicon'); } else if (!this.dataset.s) { this.dataset.s=1; this.src = window.generateFallbackSVG('${report.source.replace(/'/g, "\\'")}'); this.classList.remove('is-favicon'); this.classList.add('is-fallback'); } else { this.style.display = 'none'; }">
-        </div>
-        <h3 class="card-title">${report.title}</h3>
-        <p class="card-summary">${report.summary}</p>
-        ${report.notes ? `<p class="card-notes">📝 ${report.notes}</p>` : ''}
-        <div class="card-footer">
-          <div class="card-tags">${tagsHTML}</div>
-          <div class="card-actions">
-            <button class="btn-ask-ai ask-ai-btn" data-url="${link || ''}" data-title="${report.title}" title="Ask AI about this report">✨ Ask AI</button>
-            <button class="btn-listen listen-btn" data-url="${link || ''}" data-title="${report.title}" data-source="${report.source}" data-summary="${report.summary}" title="Generate 1-min Audio Summary">🔊 Listen</button>
-            <button class="copy-btn" data-url="${link || ''}" title="Copy link">📋</button>
-            <div class="card-source">
-              <span class="source-icon">${icon}</span>
-              <span>${report.source}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </article>
-  `;
-}
+// (Card view logic removed)
 
 // Generate table row HTML
 function createReportRow(report) {
@@ -189,7 +125,6 @@ function getNextId() {
 
 window.ReportsModule = {
   data: reportsData,
-  createCard: createReportCard,
   createRow: createReportRow,
   isNewReport,
   getNextId

@@ -3,7 +3,6 @@
 let currentCategory = 'All';
 let currentSearch = '';
 let activeTag = null;
-let currentView = 'table';
 
 function filterReports() {
     const data = window.ReportsModule.data;
@@ -44,14 +43,6 @@ function setTagFilter(tag) {
     renderFilteredReports();
 }
 
-function setViewMode(mode) {
-    currentView = mode;
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.view === mode);
-    });
-    renderFilteredReports();
-}
-
 function clearFilters() {
     currentCategory = 'All';
     currentSearch = '';
@@ -87,19 +78,6 @@ function attachCardHandlers(container) {
 
     container.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', handleCopyClick);
-    });
-}
-
-function renderCardsView(reports, container) {
-    container.innerHTML = reports.map(r => window.ReportsModule.createCard(r)).join('');
-    attachCardHandlers(container);
-
-    container.querySelectorAll('.report-card').forEach(card => {
-        card.addEventListener('click', e => {
-            if (e.target.closest('.copy-btn') || e.target.closest('.tag') || e.target.closest('.ask-ai-btn') || e.target.closest('.listen-btn')) return;
-            const url = card.dataset.url;
-            if (url) window.open(url, '_blank');
-        });
     });
 }
 
@@ -172,8 +150,6 @@ window.FiltersModule = {
     setCategoryFilter,
     setSearchFilter,
     setTagFilter,
-    setViewMode,
-    getViewMode: () => currentView,
     clearFilters,
     renderFilteredReports,
     updateStats

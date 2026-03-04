@@ -49,14 +49,18 @@ module.exports = async function handler(req, res) {
         if (url && firecrawlApiKey) {
             try {
                 console.log(`Fetching full text for audio generation via Firecrawl: ${url}`);
+                const fcController = new AbortController();
+                const fcTimeout = setTimeout(() => fcController.abort(), 30000); // 30s timeout for large PDFs
                 const fcRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
                     method: 'POST',
+                    signal: fcController.signal,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${firecrawlApiKey}`
                     },
                     body: JSON.stringify({ url, formats: ['markdown'] })
                 });
+                clearTimeout(fcTimeout);
                 const fcData = await fcRes.json();
                 if (fcData.success && fcData.data && fcData.data.markdown && fcData.data.markdown.length > 500) {
                     contextText = fcData.data.markdown.substring(0, 15000);
@@ -65,10 +69,10 @@ module.exports = async function handler(req, res) {
                     console.warn('Firecrawl returned insufficient content:', fcData?.data?.markdown?.length || 0, 'chars');
                 }
             } catch (e) {
-                console.warn('Firecrawl scraping failed, falling back to short summary:', e.message);
+                console.warn('Firecrawl scraping failed (timeout or error), falling back to short summary:', e.message);
             }
         } else if (!firecrawlApiKey) {
-            console.warn('No Firecrawl key, skipping full-text scrape.');
+            console.warn('No Firecrawl key, skipping full-text scrape.')
         }
 
         // Fallback safely to the short UI summary if the full report couldn't be extracted
